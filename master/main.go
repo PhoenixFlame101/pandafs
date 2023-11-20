@@ -1,4 +1,3 @@
-// master/main.go
 package master
 
 import (
@@ -29,14 +28,15 @@ func (n *MasterNode) Init() (err error) {
 
 	n.api = gin.Default()
 	n.api.POST("/tasks", func(c *gin.Context) {
-		var payload struct {
-			Cmd string `json:"cmd"`
-		}
-		if err := c.ShouldBindJSON(&payload); err != nil {
+		rawData, err := c.GetRawData()
+		payload := string(rawData)
+		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		n.nodeSvr.CmdChannel <- payload.Cmd
+
+		HandleCommand(payload)
+		// n.nodeSvr.CmdChannel <- payload.Cmd
 
 		response := <-n.nodeSvr.ResponseChannel
 		c.JSON(http.StatusOK, gin.H{"response": response.GetData()})
@@ -61,8 +61,4 @@ func GetMasterNode() *MasterNode {
 		}
 	}
 	return node
-}
-
-func main() {
-	GetMasterNode().Start()
 }
