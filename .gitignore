@@ -24,3 +24,6 @@ go.work
 .vscode/*
 .history/
 *.vsix
+
+# SQLite
+*.db
