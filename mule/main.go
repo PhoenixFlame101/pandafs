@@ -3,6 +3,7 @@ package mule
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"google.golang.org/grpc"
@@ -11,11 +12,27 @@ import (
 )
 
 type Mule struct {
+	id   string
 	conn *grpc.ClientConn
 	c    core.NodeServiceClient
 }
 
+func generateRandomID(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	// Create a byte slice to store the generated ID
+	id := make([]byte, length)
+
+	// Generate random ID characters
+	for i := range id {
+		id[i] = charset[rand.Intn(len(charset))]
+	}
+
+	return string(id)
+}
+
 func (n *Mule) Init() (err error) {
+	n.id = generateRandomID(16)
 	n.conn, err = grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -52,7 +69,7 @@ func (n *Mule) Start() {
 }
 
 func (n *Mule) pingMaster() {
-	response, err := n.c.ReportStatus(context.Background(), &core.Request{})
+	response, err := n.c.ReportStatus(context.Background(), &core.Request{Id: mule.id})
 	if err != nil {
 		fmt.Println("Error pinging master:", err)
 		return

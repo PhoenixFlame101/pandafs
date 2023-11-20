@@ -1,10 +1,13 @@
 package master
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -17,6 +20,27 @@ type MasterNode struct {
 	ln      net.Listener
 	svr     *grpc.Server
 	nodeSvr *core.NodeServiceGrpcServer
+	mu      sync.Mutex
+	mules   map[string]struct{}
+}
+
+func (m *MasterNode) AddMuleID(id string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.mules[id]; !exists {
+		m.mules[id] = struct{}{}
+		fmt.Printf("Added Mule ID: %s\n", id)
+	}
+}
+
+func (n *MasterNode) ReportStatus(ctx context.Context, req *core.Request) (*core.Response, error) {
+	muleID := req.GetId()
+
+	n.AddMuleID(muleID)
+
+	return &core.Response{
+		Data: "Status received",
+	}, nil
 }
 
 func (n *MasterNode) Init() (err error) {
@@ -26,6 +50,7 @@ func (n *MasterNode) Init() (err error) {
 	}
 	n.svr = grpc.NewServer()
 	n.nodeSvr = core.GetNodeServiceGrpcServer()
+	n.mules = make(map[string]struct{})
 	core.RegisterNodeServiceServer(n.svr, n.nodeSvr)
 
 	n.api = gin.Default()

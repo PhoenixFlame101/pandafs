@@ -10,14 +10,51 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-
-	"pandafs/core"
 )
 
 var db *sql.DB
 
+func isValidFilename(filename, pwd string) bool {
+
+	reservedCharacters := []string{"\\", "/", ":", "*", "?", "\"", "<", ">", "|"}
+
+	for _, char := range reservedCharacters {
+		if strings.Contains(filename, char) {
+			return false
+		}
+	}
+
+	val, err := inodeExists(pwd, filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if val {
+		return false
+	}
+
+	return true
+}
+
+func inodeExists(pwd, filename string) (bool, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM inode i
+		JOIN directory d ON i.id = d.file_id
+		WHERE i.filename = ? AND d.dir_id = (SELECT id FROM inode WHERE filename = ?);
+	`
+
+	var count int
+	err := db.QueryRow(query, filename, pwd).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func HandleCommand(payload string) {
-	// fmt.Println(payload)
+
 	InitializeDB()
 
 	var data map[string]string
@@ -27,7 +64,6 @@ func HandleCommand(payload string) {
 		return
 	}
 
-	// Accessing values from the map
 	// for key, value := range data {
 	// 	fmt.Printf("Key: %s, Value: %v\n", key, value)
 	// }
@@ -73,7 +109,6 @@ func GetDirID(pwd string) (int, error) {
 	dirs := strings.Split(pwd, "/")
 	dirs = append([]string{"/"}, dirs...)
 
-	// Remove whitespaces
 	var cleanDirs []string
 	for _, dir := range dirs {
 		if dir != "" {
@@ -81,7 +116,6 @@ func GetDirID(pwd string) (int, error) {
 		}
 	}
 
-	// Root dir
 	var currentDirID int = 0
 
 	for _, dir := range cleanDirs {
@@ -104,6 +138,9 @@ func GetDirID(pwd string) (int, error) {
 }
 
 func (n *MasterNode) TouchCommand(filename, pwd string) {
+	if !isValidFilename(filename, pwd) {
+		return
+	}
 
 	result, err := db.Exec(`
       INSERT INTO inode (filename, filesize, isDirectory) VALUES (?, 0, false);
@@ -183,6 +220,10 @@ func (n *MasterNode) RemoveCommand(filename, pwd string) {
 }
 
 func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
+	if !isValidFilename(filepath.Base(destFilename), pwd) {
+		return
+	}
+
 	fmt.Println(filepath.Join(pwd, filepath.Dir(srcFilename)))
 	srcDirID, err := GetDirID(filepath.Join(pwd, filepath.Dir(srcFilename)))
 	if err != nil {
@@ -225,6 +266,10 @@ func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
 }
 
 func (n *MasterNode) CopyCommand(srcFilename, destFilename, pwd string) {
+	if !isValidFilename(filepath.Base(destFilename), pwd) {
+		return
+	}
+
 	srcID, err := GetDirID(srcFilename)
 	if err != nil {
 		log.Fatal(err)
@@ -242,7 +287,7 @@ func (n *MasterNode) CopyCommand(srcFilename, destFilename, pwd string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("File/directory copied successfully.")
+	fmt.Println("File copied successfully.")
 }
 
 func (n *MasterNode) ListCommand(pwd string) {
@@ -271,7 +316,7 @@ func (n *MasterNode) ListCommand(pwd string) {
 		}
 
 		if isDirectory {
-			fmt.Println(filename + "/") // Append '/' to directory names
+			fmt.Println(filename + "/")
 		} else {
 			fmt.Println(filename)
 		}
