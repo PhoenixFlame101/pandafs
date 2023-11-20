@@ -10,12 +10,15 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+
+	"pandafs/core"
 )
 
 var db *sql.DB
 
 func HandleCommand(payload string) {
-	fmt.Println(payload)
+	// fmt.Println(payload)
+	InitializeDB()
 
 	var data map[string]string
 	err := json.Unmarshal([]byte(payload), &data)
@@ -34,6 +37,7 @@ func HandleCommand(payload string) {
 		node.ListCommand(data["pwd"])
 	case "touch":
 		node.TouchCommand(data["filename"], data["pwd"])
+		fmt.Println("got here lol")
 	case "cp":
 		node.CopyCommand(data["filename1"], data["filename2"], data["pwd"])
 	case "mv":
@@ -47,6 +51,8 @@ func HandleCommand(payload string) {
 		// case "download":
 		// 	node.TouchCommand(data["filename"], data["pwd"])
 	}
+
+	CloseDB()
 }
 
 func InitializeDB() {
@@ -177,10 +183,25 @@ func (n *MasterNode) RemoveCommand(filename, pwd string) {
 }
 
 func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
-	srcID, err := GetDirID(srcFilename)
+	fmt.Println(filepath.Join(pwd, filepath.Dir(srcFilename)))
+	srcDirID, err := GetDirID(filepath.Join(pwd, filepath.Dir(srcFilename)))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var srcID int
+	query := `SELECT d.file_id
+		FROM directory d
+		INNER JOIN inode i ON i.id = d.file_id
+		WHERE d.dir_id = ? AND i.filename = ?;`
+	err = db.QueryRow(query, srcDirID, srcFilename).Scan(&srcID)
+	if err == sql.ErrNoRows {
+		return
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("file id: %d\n", srcID)
 
 	destDirPath := filepath.Dir(destFilename)
 
@@ -188,6 +209,7 @@ func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("dir id: %d\n", destDirID)
 
 	_, err = db.Exec("UPDATE directory SET dir_id = ? WHERE file_id = ? AND dir_id = ?", destDirID, srcID, pwd)
 	if err != nil {
@@ -199,7 +221,7 @@ func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("File/directory moved successfully.")
+	fmt.Println("File moved successfully.")
 }
 
 func (n *MasterNode) CopyCommand(srcFilename, destFilename, pwd string) {
@@ -261,8 +283,8 @@ func (n *MasterNode) UploadCommand(filename, filesize, pwd string) {
 	AddFileToDB(filename, size, pwd)
 }
 
-func (n *MasterNode) DirExists(dir, pwd string) {
-	id, err := GetDirID(filepath.JOIN(pwd, dir))
+func (n *MasterNode) DirExists(dir, pwd string) bool {
+	_, err := GetDirID(filepath.Join(pwd, dir))
 	if err != nil {
 		return false
 	} else {

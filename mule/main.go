@@ -1,11 +1,8 @@
-// mule/main.go
 package mule
 
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -47,10 +44,10 @@ func (n *Mule) Start() {
 		}
 
 		fmt.Println("Received command:", res.GetData())
-		parts := strings.Split(res.GetData(), " ")
-		if err := exec.Command(parts[0], parts[1:]...).Run(); err != nil {
-			fmt.Println(err)
-		}
+		// parts := strings.Split(res.GetData(), " ")
+		// if err := exec.Command(parts[0], parts[1:]...).Run(); err != nil {
+		// 	fmt.Println(err)
+		// }
 	}
 }
 
@@ -73,8 +70,4 @@ func GetMule() *Mule {
 		}
 	}
 	return mule
-}
-
-func main() {
-	GetMule().Start()
 }

@@ -1,8 +1,10 @@
 package master
 
 import (
+	"io"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -36,10 +38,36 @@ func (n *MasterNode) Init() (err error) {
 		}
 
 		HandleCommand(payload)
-		// n.nodeSvr.CmdChannel <- payload.Cmd
+		n.nodeSvr.CmdChannel <- payload
 
 		response := <-n.nodeSvr.ResponseChannel
 		c.JSON(http.StatusOK, gin.H{"response": response.GetData()})
+	})
+
+	n.api.POST("/upload", func(c *gin.Context) {
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			c.String(400, "Bad request: no file provided")
+			return
+		}
+		defer file.Close()
+
+		// Create a new file on the server to store the uploaded file
+		dst, err := os.Create("./uploads/" + header.Filename)
+		if err != nil {
+			c.String(500, "Failed to create the file on server")
+			return
+		}
+		defer dst.Close()
+
+		// Copy the file content from the request to the newly created file
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			c.String(500, "Failed to copy the file content")
+			return
+		}
+
+		c.String(200, "File uploaded successfully: %s", header.Filename)
 	})
 
 	return nil
