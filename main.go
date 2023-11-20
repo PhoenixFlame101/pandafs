@@ -1,7 +1,9 @@
+// main.go
 package main
 
 import (
 	"os"
+
 	"pandafs/master"
 	"pandafs/mule"
 )

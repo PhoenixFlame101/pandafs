@@ -1,3 +1,4 @@
+// core/node_service_server.go
 package core
 
 import (
@@ -7,7 +8,8 @@ import (
 type NodeServiceGrpcServer struct {
 	UnimplementedNodeServiceServer
 
-	CmdChannel chan string
+	CmdChannel      chan string
+	ResponseChannel chan *Response
 }
 
 func (n NodeServiceGrpcServer) ReportStatus(ctx context.Context, request *Request) (*Response, error) {
@@ -31,7 +33,8 @@ var server *NodeServiceGrpcServer
 func GetNodeServiceGrpcServer() *NodeServiceGrpcServer {
 	if server == nil {
 		server = &NodeServiceGrpcServer{
-			CmdChannel: make(chan string),
+			CmdChannel:      make(chan string),
+			ResponseChannel: make(chan *Response),
 		}
 	}
 	return server
