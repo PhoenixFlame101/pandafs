@@ -54,9 +54,26 @@ func sendChunkToMuleNode(chunk []byte, muleNode MuleNode) error {
 
 // updateDatabaseWithChunkInfo updates the SQLite database with chunk information.
 func updateDatabaseWithChunkInfo(chunkID int, muleNode MuleNode) error {
-	// TODO: Implement database update logic
-	// Use the muleNode.ID and other relevant information to update the database
-	return nil
+	result, err := db.Exec(`
+      INSERT INTO inode (filename, filesize, isDirectory) VALUES (?, 0, false);
+   `, chunkID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	inodeID, _ := result.LastInsertId()
+
+	id, err := GetDirID("/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`
+      INSERT INTO directory (file_id, dir_id) VALUES (?, ?);
+   `, inodeID, id)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func SplitAndDistribute(fileContent []byte, muleNodes []MuleNode) error {

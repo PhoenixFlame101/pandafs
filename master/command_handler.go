@@ -331,6 +331,26 @@ func (n *MasterNode) ListCommand(pwd string) {
 func (n *MasterNode) UploadCommand(filename, filesize, pwd string) {
 	size, _ := strconv.Atoi(filesize)
 	AddFileToDB(filename, size, pwd)
+
+	sourceFile, err := os.Open(source)
+	if err != nil {
+		fmt.Println("Error opening source file:", err)
+		return
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(destination)
+	if err != nil {
+		fmt.Println("Error creating destination file:", err)
+		return
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		fmt.Println("Error copying file:", err)
+		return
+	}
 }
 
 func (n *MasterNode) DirExists(dir, pwd string) bool {

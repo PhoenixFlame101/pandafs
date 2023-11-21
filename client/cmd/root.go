@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -379,7 +380,9 @@ var uploadCmd = &cobra.Command{
 			fmt.Println("Request failed with status code:", resp.StatusCode)
 		}
 
-		url1 := "http://localhost:8000"
+		_ = exec.Command("cp", "./test.txt", "../upload/test.txt").Run()
+		fmt.Println("got here lol")
+		url1 := "http://localhost:9092/upload"
 
 		// Open the file
 		file, err := os.Open("./test.txt")
