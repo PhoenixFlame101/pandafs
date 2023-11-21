@@ -72,8 +72,7 @@ func HandleCommand(payload string) {
 	case "ls":
 		node.ListCommand(data["pwd"])
 	case "touch":
-		node.TouchCommand(data["filename"], data["pwd"])
-		fmt.Println("got here lol")
+		node.TouchCommand(data["filename"], data["pwd"], payload)
 	case "cp":
 		node.CopyCommand(data["filename1"], data["filename2"], data["pwd"])
 	case "mv":
@@ -137,7 +136,7 @@ func GetDirID(pwd string) (int, error) {
 	return currentDirID, nil
 }
 
-func (n *MasterNode) TouchCommand(filename, pwd string) {
+func (n *MasterNode) TouchCommand(filename, pwd, payload string) {
 	if !isValidFilename(filename, pwd) {
 		return
 	}
@@ -163,6 +162,7 @@ func (n *MasterNode) TouchCommand(filename, pwd string) {
 		log.Fatal(err)
 	}
 
+	n.nodeSvr.CmdChannel <- fmt.Sprintf("touch %s", "/tmp/pandafs"+pwd+filename)
 	fmt.Println("File created successfully.")
 }
 
@@ -216,6 +216,7 @@ func (n *MasterNode) RemoveCommand(filename, pwd string) {
 		}
 	}
 
+	n.nodeSvr.CmdChannel <- fmt.Sprintf("rm %s", filename)
 	fmt.Println("File/directory removed successfully.")
 }
 
@@ -262,6 +263,7 @@ func (n *MasterNode) MoveCommand(srcFilename, destFilename, pwd string) {
 		log.Fatal(err)
 	}
 
+	n.nodeSvr.CmdChannel <- fmt.Sprintf("mv %s %s", srcFilename, destFilename)
 	fmt.Println("File moved successfully.")
 }
 
@@ -287,6 +289,7 @@ func (n *MasterNode) CopyCommand(srcFilename, destFilename, pwd string) {
 		log.Fatal(err)
 	}
 
+	n.nodeSvr.CmdChannel <- fmt.Sprintf("cp %s %s", srcFilename, destFilename)
 	fmt.Println("File copied successfully.")
 }
 
@@ -321,6 +324,8 @@ func (n *MasterNode) ListCommand(pwd string) {
 			fmt.Println(filename)
 		}
 	}
+
+	n.nodeSvr.CmdChannel <- fmt.Sprintf("ls")
 }
 
 func (n *MasterNode) UploadCommand(filename, filesize, pwd string) {

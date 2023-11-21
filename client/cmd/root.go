@@ -41,7 +41,7 @@ var touchCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{\"cmd\": touch, \"filename\":" + filename + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -86,7 +86,7 @@ var lsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: ls}"
 		json_string := map[string]interface{}{
@@ -128,7 +128,7 @@ var rmCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: rm, Filename:" + filename + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -180,7 +180,7 @@ var mvCmd = &cobra.Command{
 		filename1 := args[0]
 		filename2 := args[1]
 		fmt.Print(filename1, filename2)
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: mv, Filename1:" + filename1 + ", Filename2: " + filename2 + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -226,7 +226,7 @@ var cpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		filename1 := args[0]
 		filename2 := args[1]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: cp, Filename1:" + filename1 + ", Filename2: " + filename2 + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -271,7 +271,7 @@ var cdCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 		if filename != ".." {
 			pwd = filename
 		}
@@ -318,7 +318,7 @@ var uploadCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: upload, Filename:" + filename + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -436,7 +436,7 @@ var downloadCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
-		url := "http://localhost:9001"
+		url := "http://localhost:9092/tasks"
 
 		// json_string := "{Command: download, Filename:" + filename + ", pwd:" + pwd + "}"
 		json_string := map[string]interface{}{
@@ -480,7 +480,7 @@ var pwdCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// url := "http://localhost:9001"
+		// url := "http://localhost:9092/tasks"
 
 		json_string := map[string]interface{}{
 			"cmd": "pwd",

@@ -63,9 +63,8 @@ func (n *MasterNode) Init() (err error) {
 		}
 
 		HandleCommand(payload)
-		n.nodeSvr.CmdChannel <- payload
 
-		response := <-n.nodeSvr.ResponseChannel
+		var response core.Response
 		c.JSON(http.StatusOK, gin.H{"response": response.GetData()})
 	})
 
